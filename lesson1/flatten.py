@@ -1,5 +1,6 @@
 input_string = ''
-while not input_string.startswith('[') or not input_string.endswith(']'):
+while not input_string.startswith('[') or not input_string.endswith(']') \
+      or 'for' in input_string:
     input_string = input('Enter a list: ')
 
 input_list = eval(input_string)
