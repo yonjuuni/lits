@@ -1,4 +1,8 @@
-input_list = [1, [2, 3], 4, [[6, 7]]]
+input_string = ''
+while not input_string.startswith('[') or not input_string.endswith(']'):
+    input_string = input('Enter a list: ')
+
+input_list = eval(input_string)
     
 def flatten(lst):
     if lst == []:
@@ -7,4 +11,4 @@ def flatten(lst):
         return flatten(lst[0]) + flatten(lst[1:])
     return lst[:1] + flatten(lst[1:])
 
-print(flatten(input_list))
+print('Result:', flatten(input_list))
