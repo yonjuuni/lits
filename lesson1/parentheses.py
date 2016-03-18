@@ -39,7 +39,7 @@ if open_braces or close_braces:
         print('The number of {braces} is good to go.')
     elif open_braces > close_braces:
         print('You are missing {} closing braces: }}'.format(open_braces - \
-                                                            close_braces))
+                                                             close_braces))
     else:
         print('You are missing {} opening braces: {{'.format(close_braces - \
-                                                            open_braces))
+                                                             open_braces))
