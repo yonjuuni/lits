@@ -1,15 +1,17 @@
 input_string = ''
-while not input_string.startswith('[') or not input_string.endswith(']') \
-      or 'for' in input_string:
+while (not input_string.startswith('[') or 
+       not input_string.endswith(']') or 
+       'for' in input_string):
     input_string = input('Enter a list: ')
 
 input_list = eval(input_string)
-    
-def flatten(lst):
-    if lst == []:
-        return lst
-    if isinstance(lst[0], list):
-        return flatten(lst[0]) + flatten(lst[1:])
-    return lst[:1] + flatten(lst[1:])
+# input_list = [1, [2, 3], 4, [[6, 7]]]
 
-print('Result:', flatten(input_list))
+temp = str(input_list).split()
+res = []
+for i in temp:
+    element = i.strip(',[]')
+    if element:
+        res.append(eval(element))
+
+print(res)
