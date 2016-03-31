@@ -1,18 +1,6 @@
-"""
-Rules: http://www.durbetsel.ru/2_21.htm
-
-The document below will describe engine of a card game.
-The game would have four types of objects:
-1. Game object - number of players, number of cards, types of cards, card priority, etc.
-2. Card object - card specific details (name, value [if any], suit [if any], etc.)
-3. Player object - current cards
-"""
-
 import os
 from time import sleep
-from pprint import pprint
-from random import shuffle, choice, randint
-
+from random import shuffle, choice
 
 PLAYER_MONEY = 100
 
@@ -28,22 +16,22 @@ class Player:
 
     def print_cards(self):
         if self.ai:
-            print("Bot's cards: {} ({} points)".\
+            print("Bot's cards: {} ({} points)".
                   format(' '.join(card.pic for card in self.cards), self.score)
                   )
         else:
-            print('Your cards: {} ({} points)'.\
+            print('Your cards: {} ({} points)'.
                   format(' '.join(card.pic for card in self.cards), self.score)
                   )
 
     def check_score(self):
         self.score = sum([card.value for card in self.cards])
-        
+
     def take_turn(self):
-        res = False
+
         if self.ai:
             print('More? (y/n): ', end='', flush=True)
-            for i in range(4):
+            for i in range(3):
                 sleep(0.5)
                 print('.', end='', flush=True)
             if self.score <= 11:
@@ -55,27 +43,29 @@ class Player:
             else:
                 weight = [(False, 1)]
 
-            res = choice([val for val, cnt in weight for i in range(cnt)])
+            res = choice([val for val, cnt in weight for _ in range(cnt)])
 
             if res:
                 print(' y')
+                sleep(0.5)
             else:
                 print(' n')
-            
+                sleep(0.5)
+
         else:
             ans = input('More? (y/n): ').lower()
             if ans == 'y':
                 res = True
             elif ans == 'n':
-                res == False
+                res = False
             else:
                 print('Incorrect choice.')
                 return self.take_turn()
         return res
 
     def __repr__(self):
-        return '{}: {} ({} points)'.format(self.name, 
-                                           ' '.join(card.pic for card 
+        return '{}: {} ({} points)'.format(self.name,
+                                           ' '.join(card.pic for card
                                                     in self.cards),
                                            self.score)
 
@@ -93,7 +83,38 @@ class Card:
 
 
 class Game:
-    
+    """
+    Aim of the “OCHKO” game is to get a total of 21 points from your cards.
+
+    Cards/Points:
+
+    Ace    1 or 11 (the player who holds the Ace gets to choose the value
+                    of the card).
+    Jack   2
+    Queen  3
+    King   4
+    Numbered cards have respective numeric values (6 through 10).
+
+    Rules:
+
+    1. Player should make a bet from 5 to 25.
+    2. Player wins as much as they bet. If player bets 10, they win 10 from the
+       'Bot' (keeping their original bet).
+
+       * If a player gets OCHKO (10 + Ace or 2 Aces) from the initial draw,
+       they win right away and get 2x their bet.
+
+    3. Player loses as much as they bet.
+    4. If the hand is a draw, player keeps the bet neither winning nor losing
+       money.
+    5. Two cards are dealt to each player.
+    6. Player can keep their hand as it is.
+    7. If a player doesn't have 21 points, they may take additional cards.
+    8. The winner is the one who gets the most points, or has 21 points.
+    9. If the total score is more than 21 points - player loses.
+
+    """
+
     def __init__(self, player_name):
         self._cards_per_player = 2
         self.players = [Player(player_name), Player()]
@@ -137,12 +158,12 @@ class Game:
                                           'clubs': '🃑',
                                           'diamonds': '🃁',
                                           'hearts': '🂱'}),
-                            ]
-        self.deck = self._create_deck()
-        
+                             ]
+        self.deck = []
+
     def _create_deck(self):
-        return [Card(value, suit) for value in self._card_values 
-                                  for suit in self._card_suits]
+        return [Card(value, suit) for value in self._card_values
+                for suit in self._card_suits]
 
     def distribute_cards(self):
         for player in self.players:
@@ -172,33 +193,38 @@ class Game:
         bet = input('Make a bet (5 to 25): ')
         try:
             bet = int(bet)
-        except:
+        except ValueError:
             print('Your bet should be an integer, try again.')
             return self.enter_bet()
         else:
-            if (bet < 5 or bet > 25):
-                print('The bet should be from 5 to 25, try again.')
+            if bet < 5 or bet > 25:
+                print('Your bet should be from 5 to 25, try again.')
+                return self.enter_bet()
+            if bet > self.player.money:
+                print("You don't have enough money, your max bet is {}.".
+                      format(self.player.money))
                 return self.enter_bet()
         return bet
 
-    def reset_player_cards(self):
+    def reset_cards(self):
         for player in self.players:
             player.score = 0
             player.cards = []
+        self.deck = self._create_deck()
+        self.distribute_cards()
 
     def win(self):
-        if (self.ai.score < self.player.score <= 21):
+        if self.ai.score < self.player.score <= 21:
             return True
-        elif (self.player.score > 21 or 
-              (self.player.score < self.ai.score and self.ai.score <= 21)):
+        elif (self.player.score > 21 or
+              self.player.score < self.ai.score <= 21):
             return False
         else:
             return None
 
     def new_round(self):
-        
-        self.reset_player_cards()
-        self.distribute_cards()
+
+        self.reset_cards()
         bet = self.enter_bet()
 
         if self.player.score in [21, 22]:
@@ -224,8 +250,7 @@ class Game:
                 print('You win! {} added to your balance.'.format(bet))
                 self.player.money += bet
             elif res is None:
-                print("It's a tie. {} added to your balance.".format(bet))
-                self.player.money += bet
+                print("It's a draw. You keep the money.")
             else:
                 print('You lose! {} removed from your balance.'.format(bet))
                 self.player.money -= bet
@@ -243,9 +268,12 @@ class Game:
 
     def play(self):
         print("Welcome to OCHKO, {}. Let's play!".format(self.player.name))
+        print(self.__doc__)
+        input('Press Enter to continue...')
+        os.system('clear')
         print('Your balance is {}.'.format(self.player.money))
         self.new_round()
-        print('Bye-bye.')
+        print('Bye-bye.\n')
 
 
 def main():
