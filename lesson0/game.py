@@ -2,8 +2,8 @@ import sys
 import os
 from random import shuffle
 
-VERSION = 0.01
-AUTHOR = 'Alex Sanchez\nalex@s1ck.org\n'
+__version__ = 0.01
+__author__ = 'Alex Sanchez\nalex@s1ck.org\n'
 
 arg_help = """
 
@@ -127,8 +127,6 @@ class Game:
 
     def __init__(self):
         self.fifty_fifty = False
-        # self.audience = False
-        # self.friend = False
         self.questions = []
 
 
@@ -141,19 +139,6 @@ class Question:
         self.answers = answers
         self.id = _id
 
-    @staticmethod
-    def lookup(_id):
-        try:
-            obj = Question(questions[_id]['question'],
-                           questions[_id]['prize'],
-                           questions[_id]['answers'],
-                           questions[_id]['answer'],
-                           _id)
-            return obj
-        except Exception:
-            print('Wrong question ID.')
-            return None
-
     def fifty_fifty(self, game_obj):
         options = ['a', 'b', 'c', 'd']
         options.remove(self.answer.lower())
@@ -163,15 +148,6 @@ class Question:
         print('Оставшиеся ответы: ({}) ({})'.format(res[0].upper(),
                                                     res[1].upper()))
         game_obj.fifty_fifty = True
-        return None
-
-    # def audience(self, game_obj):
-    #     game_obj.audience = True
-    #     pass
-
-    # def friend(self, game_obj):
-    #     game_obj.friend = True
-    #     pass
 
 
 def serve_question(q, game_obj):
@@ -200,41 +176,54 @@ def serve_question(q, game_obj):
               'q - выход'.format('1 - подсказка 50/50\n' 
                                  if not game_obj.fifty_fifty else 
                                  'Подсказка 50/50 использована.\n'))
-        ans = input('Ваш ответ: ')
-        while ans.lower() not in options:
+        ans = input('Ваш ответ: ').lower()
+        while ans not in options:
             print('Неверный ввод.')
             return get_response()
         return ans
     
     def validate_response(ans):
-        if ans.lower() == q.answer.lower():
+        if ans == q.answer.lower():
             print('Правильно! :)\n')
-            return True
-        elif ans.lower() == 'q':
-            confirmation = input('Вы действительно хотите выйти? (y/n)')
-            if confirmation.lower() == 'y':
+            res = True
+        elif ans == 'q':
+            confirmation = input('Вы действительно хотите выйти? (y/n): ').lower()
+            if confirmation == 'y':
                 print('Очень жаль.\n')
-                return False
+                res = False
             else:
-                serve_question(q, game_obj)
-        elif ans.lower() == '1':
+                return serve_question(q, game_obj)
+        elif ans == '1':
             q.fifty_fifty(game_obj) 
             return validate_response(get_response())
-        elif ans.lower() == 'h':
+        elif ans == 'h':
             show_help()
             return serve_question(q, game_obj)
         else:
             print('Неправильно :(\n'
                   'Правильный ответ: "{}"\n'.format(q.answer))
-            return False
+            res = False
+        return res
 
     return validate_response(get_response())
+
+
+def question_lookup(_id):
+    try:
+        obj = Question(questions[_id]['question'],
+                       questions[_id]['prize'],
+                       questions[_id]['answers'],
+                       questions[_id]['answer'],
+                       _id)
+        return obj
+    except KeyError:
+        print('Wrong question ID.')
 
 
 def play_game():
     
     game = Game()
-    game.questions = [Question.lookup(i) for i in range(1, 16)]
+    game.questions = [question_lookup(i) for i in range(1, 16)]
     
     for q in game.questions:
         if serve_question(q, game):
@@ -246,18 +235,16 @@ def play_game():
                       'Спасибо за игру!\n')
             elif 5 <= q.id < 10:
                 print('Вы проиграли. Выигрыш: {} денег.\n'
-                      'Спасибо за игру!\n'.format(Question.lookup(5).prize))
+                      'Спасибо за игру!\n'.format(game.questions[4].prize))
             else:
                 print('Вы проиграли. Выигрыш: {} денег.\n'
-                      'Спасибо за игру!\n'.format(Question.lookup(10).prize))
+                      'Спасибо за игру!\n'.format(game.questions[9].prize))
             break
-    return None
 
 
 def show_help():
     print(help_info)
     input('Нажмите ВВОД для продолжения...')
-    return None
 
 
 def main():
@@ -270,7 +257,7 @@ def main():
         ans = input('Выберите опцию: \n'
                     'N - новая игра\n'
                     'H - помощь\n'
-                    'Q - выход\n')
+                    'Q - выход\n').lower()
         while ans not in options:
             print('Неверный ввод.\n')
             return get_response()
@@ -284,14 +271,12 @@ def main():
         show_help()
         main()
     else:
-        confirmation = input('Вы действительно хотите выйти? (y/n)')
-        if confirmation.lower() == 'y':
+        confirmation = input('Вы действительно хотите выйти? (y/n): ').lower()
+        if confirmation == 'y':
             print('До новых встреч.\n')
             sys.exit(0)
         else:
             main()
-
-    return None
 
 
 if len(sys.argv) == 1:
@@ -300,9 +285,9 @@ elif len(sys.argv) == 2:
     if sys.argv[1] == '-h' or sys.argv[1] == '--help':
         show_help()
     elif sys.argv[1] == '-v' or sys.argv[1] == '--version':
-        print('v{}'.format(VERSION))
+        print('v{}'.format(__version__))
     elif sys.argv[1] == '-c' or sys.argv[1] == '--author':
-        print(AUTHOR)
+        print(__author__)
     else:
         print('\nWrong argument: {}.'.format(sys.argv[1]), arg_help)
               

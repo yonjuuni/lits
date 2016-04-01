@@ -214,10 +214,13 @@ class Game:
         self.distribute_cards()
 
     def win(self):
-        if self.ai.score < self.player.score <= 21:
+        ai.win = self.ai.score <= 21
+        player.win = self.player.score <= 21
+
+        if player.win and self.player.score > self.ai.score:
             return True
-        elif (self.player.score > 21 or
-              self.player.score < self.ai.score <= 21):
+        elif (not player.win or (player.win and
+              self.player.score < self.ai.score)):
             return False
         else:
             return None
